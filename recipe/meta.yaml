@@ -50,8 +50,8 @@ test:
     - cmake -S test -B test-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PREFIX"  # [unix]
     - cmake -S test -B test-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="%LIBRARY_PREFIX%"  # [win]
     - cmake --build test-build --config Release
-    - ./test-build/loguru-example -v  # [unix]
-    - test-build\loguru-example.exe -v  # [win]
+    - ./test-build/loguru-example -v=9  # [unix]
+    - test-build\loguru-example.exe -v=9  # [win]
 
 about:
   home: https://github.com/emilk/loguru
