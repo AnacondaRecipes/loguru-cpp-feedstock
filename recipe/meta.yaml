@@ -10,6 +10,8 @@ source:
   # Full commit underlying upstream v2.2.0; the inherited CF snapshot reports 2.1.0.
   url: https://github.com/emilk/loguru/archive/{{ commit }}.tar.gz
   sha256: 1039add2ee9de66d3d17d68518e9584cc07d0a1db45d0f78962a3238e7573132
+  patches:
+    - loguru-dll-export.patch
 
 build:
   number: 0
@@ -18,7 +20,7 @@ build:
   script:
     # Explicit stacktrace discovery links libdl on Linux; CMake disables it on macOS.
     - cmake -S . -B build -G Ninja ${CMAKE_ARGS} -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PREFIX" -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DLOGURU_WITH_STREAMS=ON -DLOGURU_STACKTRACES=ON -DLOGURU_BUILD_TESTS=OFF -DLOGURU_BUILD_EXAMPLES=OFF -DLOGURU_CPACK=OFF -DCMAKE_CXX_FLAGS="${CXXFLAGS} -Wno-type-limits"  # [unix]
-    - cmake -S . -B build -G Ninja %CMAKE_ARGS% -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="%LIBRARY_PREFIX%" -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DLOGURU_WITH_STREAMS=ON -DLOGURU_BUILD_TESTS=OFF -DLOGURU_BUILD_EXAMPLES=OFF -DLOGURU_CPACK=OFF -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON  # [win]
+    - cmake -S . -B build -G Ninja %CMAKE_ARGS% -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="%LIBRARY_PREFIX%" -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DLOGURU_WITH_STREAMS=ON -DLOGURU_BUILD_TESTS=OFF -DLOGURU_BUILD_EXAMPLES=OFF -DLOGURU_CPACK=OFF  # [win]
     - cmake --build build --config Release
     - cmake --install build --config Release
 

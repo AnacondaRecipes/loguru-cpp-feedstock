@@ -19,6 +19,8 @@ static void verify_message(void*, const loguru::Message& message)
 int main(int argc, char* argv[])
 {
     loguru::init(argc, argv);
+    // Direct data access requires dllimport when linking the Windows DLL.
+    loguru::g_stderr_verbosity = loguru::Verbosity_INFO;
     loguru::add_callback("verify", verify_message, nullptr, loguru::Verbosity_MAX);
     LOG_F(INFO, "Hello from main.cpp!");
     complex_calculation();
