@@ -1,7 +1,7 @@
 #include <chrono>
 #include <thread>
 
-#include <loguru/loguru.hpp>
+#include <loguru.hpp>
 
 inline void sleep_ms(int ms)
 {

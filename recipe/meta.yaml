@@ -54,6 +54,11 @@ test:
     - cmake --build test-build --config Release
     - ./test-build/loguru-example -v=9  # [unix]
     - test-build\loguru-example.exe -v=9  # [win]
+    - $CXX $CXXFLAGS -pthread test/main.cpp -o loguru-pkgconfig-example $(pkg-config --cflags --libs loguru) $LDFLAGS -Wl,-rpath,"$PREFIX/lib"  # [unix]
+    - pkg-config --cflags loguru > pkgconfig.flags  # [win]
+    - cl /nologo /EHsc test\main.cpp /Fe:loguru-pkgconfig-example.exe @pkgconfig.flags "%LIBRARY_LIB%\loguru.lib"  # [win]
+    - ./loguru-pkgconfig-example -v=9  # [unix]
+    - loguru-pkgconfig-example.exe -v=9  # [win]
 
 about:
   home: https://github.com/emilk/loguru
