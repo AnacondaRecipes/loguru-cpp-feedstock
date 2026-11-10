@@ -1,0 +1,77 @@
+{% set name = "loguru-cpp" %}
+{% set version = "2.2.0" %}
+{% set commit = "ba2240d19baedc5a6727383040ff309810f0f825" %}
+
+package:
+  name: {{ name }}
+  version: {{ version }}
+
+source:
+  # Full commit underlying upstream v2.2.0; the inherited CF snapshot reports 2.1.0.
+  url: https://github.com/emilk/loguru/archive/{{ commit }}.tar.gz
+  sha256: 1039add2ee9de66d3d17d68518e9584cc07d0a1db45d0f78962a3238e7573132
+  patches:
+    - loguru-dll-export.patch
+
+build:
+  number: 0
+  run_exports:
+    - {{ pin_subpackage(name, max_pin="x.x.x") }}
+  script:
+    # Explicit stacktrace discovery links libdl on Linux; CMake disables it on macOS.
+    - cmake -S . -B build -G Ninja ${CMAKE_ARGS} -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PREFIX" -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DLOGURU_WITH_STREAMS=ON -DLOGURU_STACKTRACES=ON -DLOGURU_BUILD_TESTS=OFF -DLOGURU_BUILD_EXAMPLES=OFF -DLOGURU_CPACK=OFF -DCMAKE_CXX_FLAGS="${CXXFLAGS} -Wno-type-limits"  # [unix]
+    - cmake -S . -B build -G Ninja %CMAKE_ARGS% -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="%LIBRARY_PREFIX%" -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DLOGURU_WITH_STREAMS=ON -DLOGURU_BUILD_TESTS=OFF -DLOGURU_BUILD_EXAMPLES=OFF -DLOGURU_CPACK=OFF  # [win]
+    - cmake --build build --config Release
+    - cmake --install build --config Release
+
+requirements:
+  build:
+    - {{ compiler('cxx') }}
+    - {{ stdlib('c') }}
+    - cmake >=3.12
+    - ninja-base
+
+test:
+  files:
+    - test/CMakeLists.txt
+    - test/main.cpp
+    - test/loguru_example.hpp
+  requires:
+    - {{ compiler('cxx') }}
+    - {{ stdlib('c') }}
+    - cmake >=3.12
+    - ninja-base
+    - pkg-config
+  commands:
+    - test -f "$PREFIX/include/loguru/loguru.hpp"  # [unix]
+    - test -f "$PREFIX/lib/libloguru${SHLIB_EXT}"  # [unix]
+    - if not exist "%LIBRARY_INC%\loguru\loguru.hpp" exit 1  # [win]
+    - if not exist "%LIBRARY_BIN%\loguru.dll" exit 1  # [win]
+    - if not exist "%LIBRARY_LIB%\loguru.lib" exit 1  # [win]
+    - pkg-config --exists loguru
+    - cmake -S test -B test-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PREFIX"  # [unix]
+    - cmake -S test -B test-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="%LIBRARY_PREFIX%"  # [win]
+    - cmake --build test-build --config Release
+    - ./test-build/loguru-example -v=9  # [unix]
+    - test-build\loguru-example.exe -v=9  # [win]
+    - $CXX $CXXFLAGS -pthread test/main.cpp -o loguru-pkgconfig-example $(pkg-config --cflags --libs loguru) $LDFLAGS -Wl,-rpath,"$PREFIX/lib"  # [unix]
+    - pkg-config --cflags loguru > pkgconfig.flags  # [win]
+    - cl /nologo /EHsc test\main.cpp /Fe:loguru-pkgconfig-example.exe @pkgconfig.flags "%LIBRARY_LIB%\loguru.lib"  # [win]
+    - ./loguru-pkgconfig-example -v=9  # [unix]
+    - loguru-pkgconfig-example.exe -v=9  # [win]
+
+about:
+  home: https://github.com/emilk/loguru
+  dev_url: https://github.com/emilk/loguru
+  doc_url: https://github.com/emilk/loguru/blob/{{ commit }}/README.md
+  summary: A lightweight C++ logging library
+  description: |
+    Loguru is a lightweight C++ logging library with printf-style and stream
+    logging, callbacks, scopes, and optional stack traces.
+  license: Unlicense
+  license_family: Public-Domain
+  license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - mgorny

@@ -1,0 +1,38 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -90,6 +90,13 @@
+ 
+ add_library(loguru loguru.cpp) # allow BUILD_SHARED_LIBS to decide STATIC/SHARED
+ 
++if(WIN32 AND BUILD_SHARED_LIBS)
++  target_compile_definitions(loguru
++    PRIVATE "LOGURU_EXPORT=__declspec(dllexport)"
++    INTERFACE "LOGURU_EXPORT=__declspec(dllimport)"
++  )
++endif()
++
+ if (NOT PROJECT_IS_TOP_LEVEL)
+   add_library(${_namespace}::loguru ALIAS loguru)
+ endif()
+@@ -265,6 +272,13 @@
+     set(_pkgconfig_includedir "${LOGURU_INSTALL_INCLUDEDIR}")
+   endif()
+ 
++  # consumers of the Windows DLL need to import the data globals (e.g. g_stderr_verbosity)
++  if (WIN32 AND BUILD_SHARED_LIBS)
++    set(_pkgconfig_extra_cflags " -DLOGURU_EXPORT=__declspec(dllimport)")
++  else()
++    set(_pkgconfig_extra_cflags)
++  endif()
++
+   configure_file(
+     ${_pkgconfig_file_in}
+     ${_pkgconfig_file_out}
+--- a/cmake/loguru.pc.in
++++ b/cmake/loguru.pc.in
+@@ -9,4 +9,4 @@
+ Version: @LOGURU_VERSION@
+ Libs: -L${libdir} -lloguru
+ Libs.private: @CMAKE_THREAD_LIBS_INIT@ @_lib_dl_linkflag@
+-Cflags: -I${includedir}
++Cflags: -I${includedir} -I${includedir}/loguru@_pkgconfig_extra_cflags@
